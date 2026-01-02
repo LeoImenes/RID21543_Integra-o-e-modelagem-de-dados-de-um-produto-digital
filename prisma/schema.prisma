@@ -7,10 +7,64 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Book {
-  id          Int @id
-  titulo      String
-  num_paginas Int
-  isbn        String @unique
-  editora     String
+model Cliente {
+  id        Int      @id @default(autoincrement())
+  nome      String
+  email     String   @unique
+  cpf       String   @unique
+  telefone  String?
+  criadoEm  DateTime @default(now())
+  pedidos   Pedido[]
+}
+
+model Produtos {
+  id        Int      @id @default(autoincrement())
+  nome      String
+  preco     Float 
+  descricao String?
+  criadoEm  DateTime @default(now())
+  ativo     Boolean  @default(true)
+
+  estoque     Estoque?
+  itensPedido ItensPedido[]
+}
+
+model Estoque {
+  id          Int      @id @default(autoincrement())
+  produtoId   Int      @unique   // <- 1:1 obrigatório
+  quantidade  Int      @default(0)
+  atualizadoEm DateTime @updatedAt
+
+  produto Produtos @relation(fields: [produtoId], references: [id])
+}
+
+model Pedido {
+  id         Int       @id @default(autoincrement())
+  clienteId  Int
+  dataPedido DateTime  @default(now())
+  status     String    @default("PENDENTE")
+
+  cliente Cliente @relation(fields: [clienteId], references: [id])
+  
+  itens  ItensPedido[]
+  venda  Venda?
+}
+
+model ItensPedido {
+  id        Int      @id @default(autoincrement())
+  pedidoId  Int
+  produtoId Int
+  quantidade Int     @default(1)
+
+  pedido  Pedido   @relation(fields: [pedidoId], references: [id])
+  produto Produtos @relation(fields: [produtoId], references: [id])
+}
+
+model Venda {
+  id        Int      @id @default(autoincrement())
+  pedidoId  Int      @unique   // <- 1:1 obrigatório
+  dataVenda DateTime @default(now())
+  total     Float
+
+  pedido Pedido @relation(fields: [pedidoId], references: [id])
 }
